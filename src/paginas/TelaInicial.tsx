@@ -33,7 +33,7 @@ export function TelaInicial() {
       <MarcaDaguaLogo />
       <div className="mb-6 flex flex-col items-center text-center">
         <img
-          src="/logo.png"
+          src={`${import.meta.env.BASE_URL}logo.png`}
           alt="Fazenda São Lourenço"
           className="mb-1 h-28 w-auto drop-shadow-[0_6px_10px_rgba(74,46,26,0.35)]"
         />

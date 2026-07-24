@@ -16,7 +16,12 @@ export function Cabecalho({ titulo }: CabecalhoProps) {
       >
         ←
       </button>
-      <img src="/logo.png" alt="" aria-hidden="true" className="h-11 w-auto shrink-0" />
+      <img
+        src={`${import.meta.env.BASE_URL}logo.png`}
+        alt=""
+        aria-hidden="true"
+        className="h-11 w-auto shrink-0"
+      />
       <h1 className="text-2xl font-bold text-texto">{titulo}</h1>
     </header>
   )

@@ -260,5 +260,32 @@ arquivo ao final de cada etapa.
   o usuário abrir o app de verdade e importar esse arquivo lá.
 
 ### Isso encerra as quatro etapas do plano original
-Pendências gerais: publicar o site de verdade (GitHub Pages/Cloudflare Pages)
-para instalar no celular do produtor, e testar com o volume real de animais.
+
+## Publicação (2026-07-24)
+- Site publicado de verdade em **https://joaopaulomoraes1990.github.io/controle-de-cria/**,
+  via GitHub Pages, gratuito, para sempre.
+- Repositório: `github.com/JoaoPauloMoraes1990/controle-de-cria` (público — só o
+  código do app; a planilha real e o CSV de custos ficam de fora, no
+  `.gitignore`, e nunca sobem).
+- Publicação automática: todo `git push` na branch `main` dispara uma
+  GitHub Action que builda e publica sozinha (`.github/workflows/deploy.yml`).
+  Corrigido nessa etapa: os caminhos da logo e do favicon estavam fixos em
+  "/", o que funciona em localhost mas quebra quando o site mora numa
+  subpasta (`/controle-de-cria/`) — agora usam `import.meta.env.BASE_URL`.
+- Testado no site publicado de verdade (não só localhost): abre, navega,
+  sem erro no console, e funciona 100% offline (confirmado com o Wi-Fi
+  desligado no navegador de teste) — o requisito mais importante do projeto.
+
+### Pendente agora
+- **Instalar no celular Android do produtor de verdade** e repetir o teste
+  offline lá (o que foi feito até aqui foi num navegador automatizado, não
+  no aparelho real dele).
+- **Lançar os dados reais da fazenda**: as ~107 matrizes e ~150 crias em
+  `/cadastro-inicial`, e importar `files/despesas-para-importar.csv` em
+  `/financeiro/importar` — nenhum dos dois foi feito no site publicado
+  ainda, só testado com dados de exemplo.
+- Fazer um backup logo depois de lançar os dados de verdade.
+- **O teste mais importante do projeto** (já estava escrito desde o
+  `PROMPT-INICIAL.md`): sentar com o produtor e pedir pra ele registrar um
+  nascimento sozinho, sem instrução nenhuma. Onde ele travar é o que precisa
+  mudar — mais importante que qualquer coisa que ainda possa ser construída.

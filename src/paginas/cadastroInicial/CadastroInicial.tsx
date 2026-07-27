@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BlocoMatriz } from './BlocoMatriz'
 import { BlocoNovaMatriz } from './BlocoNovaMatriz'
 import {
@@ -15,6 +16,20 @@ import { MarcaDaguaLogo } from '../../componentes/MarcaDaguaLogo'
 interface MatrizComCrias {
   matriz: AnimalComId & { numero: string }
   crias: (AnimalComId & { numero?: string })[]
+}
+
+function BotaoVoltar() {
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/')}
+      aria-label="Voltar para a tela inicial"
+      className="mb-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-borda bg-white text-2xl"
+    >
+      ←
+    </button>
+  )
 }
 
 export function CadastroInicial() {
@@ -59,6 +74,7 @@ export function CadastroInicial() {
   if (carregando) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
+        <BotaoVoltar />
         <p className="text-lg text-texto-suave">Carregando…</p>
       </div>
     )
@@ -68,6 +84,7 @@ export function CadastroInicial() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
         <MarcaDaguaLogo />
+        <BotaoVoltar />
         <h1 className="mb-2 text-2xl font-bold text-texto">Cadastro inicial</h1>
         <p className="mb-6 text-lg text-texto-suave">
           Essa área foi encerrada. Os registros de {blocos.length}{' '}
@@ -91,6 +108,7 @@ export function CadastroInicial() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 pb-24">
       <MarcaDaguaLogo />
+      <BotaoVoltar />
       <h1 className="mb-1 text-2xl font-bold text-texto">Cadastro inicial</h1>
       <p className="mb-6 text-lg text-texto-suave">
         Lance aqui as matrizes e as crias que elas já tiveram, olhando a planilha antiga do lado.

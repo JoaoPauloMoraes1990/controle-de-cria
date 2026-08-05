@@ -1,5 +1,6 @@
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, format } from 'date-fns'
 import { calcularGanhoPesoDiario, type RegistroPesagem } from './ganhoPeso'
+import { parseDataSegura } from '../utilitarios/datas'
 
 export const PESO_ALVO_KG = 180
 
@@ -14,7 +15,8 @@ export interface ProjecaoPeso {
  * partir das pesagens dele. Com duas pesagens ou mais, usa o ganho de peso
  * do próprio animal. Com só uma pesagem, usa o ganho médio do rebanho e
  * marca o resultado como estimativa. Sem nenhuma pesagem, retorna null —
- * "não disponível", nunca uma data inventada.
+ * "não disponível", nunca uma data inventada. Pesagens com data malformada
+ * são ignoradas.
  */
 export function projetarDataPesoAlvo(
   pesagens: RegistroPesagem[],
@@ -23,7 +25,9 @@ export function projetarDataPesoAlvo(
 ): ProjecaoPeso | null {
   const validas = pesagens
     .filter((p): p is { data: string; pesoKg: number } => !!p.data && typeof p.pesoKg === 'number')
-    .sort((a, b) => a.data.localeCompare(b.data))
+    .map((p) => ({ ...p, dataObj: parseDataSegura(p.data) }))
+    .filter((p): p is { data: string; pesoKg: number; dataObj: Date } => p.dataObj !== null)
+    .sort((a, b) => a.dataObj.getTime() - b.dataObj.getTime())
 
   if (validas.length === 0) return null
 
@@ -50,7 +54,7 @@ export function projetarDataPesoAlvo(
   }
 
   const diasNecessarios = Math.ceil((pesoAlvoKg - ultima.pesoKg) / ganhoDiario)
-  const dataPrevista = addDays(parseISO(ultima.data), diasNecessarios)
+  const dataPrevista = addDays(ultima.dataObj, diasNecessarios)
 
   return { dataPrevista: format(dataPrevista, 'yyyy-MM-dd'), estimativa, jaAtingiu: false }
 }

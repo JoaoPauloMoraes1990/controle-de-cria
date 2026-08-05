@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularGanhoPesoDiario } from '../ganhoPeso'
+import { calcularGanhoPesoDiario, obterUltimaPesagemValida } from '../ganhoPeso'
 
 describe('calcularGanhoPesoDiario', () => {
   it('calcula o ganho médio por dia entre a primeira e a última pesagem', () => {
@@ -56,5 +56,38 @@ describe('calcularGanhoPesoDiario', () => {
       { data: '2026-01-11', pesoKg: 390 },
     ])
     expect(ganho).toBeCloseTo(-1, 5)
+  })
+
+  it('ignora pesagens com data malformada em vez de virar NaN', () => {
+    const ganho = calcularGanhoPesoDiario([
+      { data: '2026-01-01', pesoKg: 40 },
+      { data: '2026-02-30', pesoKg: 999 },
+      { data: '2026-01-31', pesoKg: 70 },
+    ])
+    expect(ganho).toBeCloseTo(1, 5)
+    expect(Number.isNaN(ganho)).toBe(false)
+  })
+})
+
+describe('obterUltimaPesagemValida', () => {
+  it('retorna a pesagem mais recente por data, não pela ordem da lista', () => {
+    const ultima = obterUltimaPesagemValida([
+      { data: '2026-01-31', pesoKg: 70 },
+      { data: '2026-01-01', pesoKg: 40 },
+    ])
+    expect(ultima).toEqual({ data: '2026-01-31', pesoKg: 70 })
+  })
+
+  it('retorna null sem nenhuma pesagem válida', () => {
+    expect(obterUltimaPesagemValida([])).toBeNull()
+    expect(obterUltimaPesagemValida([{ data: undefined, pesoKg: 40 }])).toBeNull()
+  })
+
+  it('ignora pesagens com data malformada', () => {
+    const ultima = obterUltimaPesagemValida([
+      { data: '2026-01-01', pesoKg: 40 },
+      { data: '2026-02-30', pesoKg: 999 },
+    ])
+    expect(ultima).toEqual({ data: '2026-01-01', pesoKg: 40 })
   })
 })

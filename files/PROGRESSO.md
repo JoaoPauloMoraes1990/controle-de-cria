@@ -289,3 +289,51 @@ arquivo ao final de cada etapa.
   `PROMPT-INICIAL.md`): sentar com o produtor e pedir pra ele registrar um
   nascimento sozinho, sem instrução nenhuma. Onde ele travar é o que precisa
   mudar — mais importante que qualquer coisa que ainda possa ser construída.
+
+### Complemento — Ajustes de uso real (2026-08-05)
+Seis pontos levantados depois que o filho do produtor começou a lançar dados
+de verdade no site publicado.
+
+- **Peso ao nascer**: campo opcional na tela "Nasceu um bezerro" — quando
+  preenchido, vira uma pesagem no histórico do animal (mesma lógica que já
+  existia na venda), alimentando o ganho de peso e a projeção dos 180kg desde
+  o primeiro dia.
+- **Identificação da fêmea mudou**: a bezerra agora recebe o número
+  definitivo dela já ao nascer (a tatuagem é o número pra sempre) — não
+  precisa mais de um segundo lançamento quando ela vira novilha. Só o bezerro
+  (macho) continua herdando o número da mãe, porque é vendido logo após o
+  desmame. Na tela de nascimento, o número só preenche sozinho a partir da
+  mãe quando o sexo é Macho.
+- **Bezerra vira novilha sozinha aos 8 meses**: sem lançamento manual. O
+  app confere a idade de cada bezerra toda vez que a tela inicial abre (não
+  tem servidor rodando por trás) e promove quem já completou 8 meses,
+  mostrando um avisinho na tela inicial com o número de quem mudou. O botão
+  "Virou novilha" foi removido.
+- **"Vacas que não pariram"** agora conta só a categoria vaca — antes também
+  contava as novilhas, o que inflava a lista. A taxa de natalidade e os
+  rankings de matriz continuam somando vaca + novilha, como já era.
+- **Tabela de bezerros reformulada**: em vez da lista só com a projeção dos
+  180kg (que ficava vazia e confusa pra quem ainda não tinha peso), agora
+  mostra número, idade, peso da última pesagem e data da última pesagem —
+  todo bezerro ativo aparece, mesmo sem peso ainda.
+- **Corrigido um "NaN" real**: o intervalo médio entre partos aparecia como
+  "NaN meses (NaN dias)" quando alguma data digitada no cadastro inicial
+  estava malformada (dia ou mês fora do calendário). Agora datas inválidas
+  são ignoradas no cálculo em vez de estragar a conta inteira — vale para
+  intervalo entre partos, ganho de peso e projeção de venda.
+
+### Como testar
+1. Em "Nasceu um bezerro": selecione uma mãe e marque sexo Macho — o número
+   preenche sozinho com o da mãe. Volte e marque Fêmea — o número fica em
+   branco, esperando digitação. Preencha um peso e salve; abra a ficha do
+   animal e confira que o peso aparece no histórico de pesagens.
+2. Cadastre (ou edite pela ficha do animal) uma bezerra com data de
+   nascimento de mais de 8 meses atrás. Abra a tela inicial — deve aparecer
+   um avisinho dizendo que ela virou novilha, com o número dela.
+3. Em "Ver os números" → "Mais números", confira que "Vacas que não pariram"
+   só lista vacas, nunca novilhas.
+4. Em "Ver os números", confira a tabela "Bezerros ativos" — número, idade,
+   peso e data da última pesagem, incluindo bezerros sem peso ainda.
+5. Se houver vaca com duas ou mais crias lançadas, confira que "Intervalo
+   médio entre partos do rebanho" mostra um número (nunca "NaN").
+6. `npm run test` roda os agora 80 testes automatizados.

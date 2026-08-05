@@ -4,7 +4,6 @@ import { Nascimento } from './paginas/Nascimento'
 import { Pesagem } from './paginas/Pesagem'
 import { Venda } from './paginas/Venda'
 import { Morte } from './paginas/Morte'
-import { VirouNovilha } from './paginas/VirouNovilha'
 import { CadastrarAnimal } from './paginas/CadastrarAnimal'
 import { FichaAnimal } from './paginas/FichaAnimal'
 import { Backup } from './paginas/Backup'
@@ -26,7 +25,6 @@ export function Rotas() {
         <Route path="/pesagem" element={<Pesagem />} />
         <Route path="/venda" element={<Venda />} />
         <Route path="/morte" element={<Morte />} />
-        <Route path="/virou-novilha" element={<VirouNovilha />} />
         <Route path="/animais/novo" element={<CadastrarAnimal />} />
         <Route path="/animais/:id" element={<FichaAnimal />} />
         <Route path="/backup" element={<Backup />} />

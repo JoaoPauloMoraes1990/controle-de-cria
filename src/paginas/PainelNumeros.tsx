@@ -8,6 +8,7 @@ import { CartaoIndicador } from '../componentes/CartaoIndicador'
 import { Botao } from '../componentes/Botao'
 import { obterIndicadoresReprodutivos, type IndicadoresReprodutivos } from '../repositorio/indicadores'
 import { formatarMesesEDias } from '../utilitarios/datas'
+import { formatarIdadeEmMeses } from '../dominio/idade'
 
 export function PainelNumeros() {
   const navigate = useNavigate()
@@ -64,32 +65,49 @@ export function PainelNumeros() {
         />
 
         <Cartao>
-          <p className="mb-2 text-lg font-semibold">Bezerros a caminho dos 180kg</p>
-          {dados.bezerrosProjecao.length === 0 && (
+          <p className="mb-2 text-lg font-semibold">Bezerros ativos</p>
+          {dados.bezerrosProjecao.length === 0 ? (
             <p className="text-base text-texto-suave">Nenhum bezerro ativo no momento.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-left text-base">
+                <thead>
+                  <tr className="border-b border-borda text-texto-suave">
+                    <th className="py-2 pr-2">Número</th>
+                    <th className="py-2 pr-2">Idade</th>
+                    <th className="py-2 pr-2">Peso</th>
+                    <th className="py-2 pr-2">Data da pesagem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dados.bezerrosProjecao.map((b) => (
+                    <tr key={b.animalId} className="border-b border-borda last:border-0">
+                      <td className="py-2 pr-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/animais/${b.animalId}`)}
+                          className="font-semibold text-marrom-escuro underline"
+                        >
+                          {b.numero || '(sem número)'}
+                        </button>
+                      </td>
+                      <td className="py-2 pr-2">
+                        {b.idadeEmMeses != null ? formatarIdadeEmMeses(b.idadeEmMeses) : 'não disponível'}
+                      </td>
+                      <td className="py-2 pr-2">
+                        {b.pesoUltimaPesagemKg != null ? `${b.pesoUltimaPesagemKg} kg` : 'sem peso ainda'}
+                      </td>
+                      <td className="py-2 pr-2">
+                        {b.dataUltimaPesagem != null
+                          ? format(parseISO(b.dataUltimaPesagem), 'dd/MM/yyyy')
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-          <ul className="flex flex-col gap-2">
-            {dados.bezerrosProjecao.map((b) => (
-              <li key={b.animalId}>
-                <button
-                  type="button"
-                  onClick={() => navigate(`/animais/${b.animalId}`)}
-                  className="flex w-full items-center justify-between rounded-xl border border-borda bg-white px-3 py-3 text-left hover:bg-verde-claro"
-                >
-                  <span className="text-lg font-semibold">{b.numero || '(sem número)'}</span>
-                  <span className="text-base text-texto-suave">
-                    {b.projecao == null
-                      ? 'sem peso registrado'
-                      : b.projecao.jaAtingiu
-                        ? 'pronto para vender'
-                        : `~ ${format(parseISO(b.projecao.dataPrevista), 'dd/MM/yyyy')}${
-                            b.projecao.estimativa ? ' (estimativa)' : ''
-                          }`}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
         </Cartao>
 
         <Cartao>

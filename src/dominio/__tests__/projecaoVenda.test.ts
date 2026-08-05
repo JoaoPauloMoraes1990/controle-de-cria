@@ -59,4 +59,20 @@ describe('projetarDataPesoAlvo', () => {
     const projecao = projetarDataPesoAlvo([{ data: '2026-01-01', pesoKg: 40 }], 2, 50)
     expect(projecao).toEqual({ dataPrevista: '2026-01-06', estimativa: true, jaAtingiu: false })
   })
+
+  it('ignora pesagens com data malformada em vez de travar ou virar NaN', () => {
+    const projecao = projetarDataPesoAlvo(
+      [
+        { data: '2026-01-01', pesoKg: 40 },
+        { data: '2026-01-31', pesoKg: 70 }, // 1kg/dia
+        { data: '2026-02-30', pesoKg: 999 }, // dia inexistente, deve ser ignorada
+      ],
+      null,
+    )
+    expect(projecao).toEqual({ dataPrevista: '2026-05-21', estimativa: false, jaAtingiu: false })
+  })
+
+  it('retorna null quando só existem pesagens com data malformada', () => {
+    expect(projetarDataPesoAlvo([{ data: '2026-13-40', pesoKg: 40 }], 1)).toBeNull()
+  })
 })

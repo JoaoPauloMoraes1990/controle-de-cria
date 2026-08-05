@@ -1,12 +1,17 @@
 import { listarAnimais, listarTodasMortes, listarTodasPesagens, listarTodasVendas } from './index'
 import { mapaNumerosAtuais } from './cadastroInicial'
-import { calcularGanhoPesoDiario, type RegistroPesagem } from '../dominio/ganhoPeso'
+import {
+  calcularGanhoPesoDiario,
+  obterUltimaPesagemValida,
+  type RegistroPesagem,
+} from '../dominio/ganhoPeso'
 import { calcularIntervaloMedioEntrePartos } from '../dominio/intervaloPartos'
 import { calcularTaxaNatalidade, type PeriodoAtividade } from '../dominio/taxaNatalidade'
 import { projetarDataPesoAlvo, type ProjecaoPeso } from '../dominio/projecaoVenda'
 import { contarAnosConsecutivosSemParir } from '../dominio/listaDescarte'
 import { contarNascimentosPorAno, contarNascimentosPorMes } from '../dominio/distribuicaoNascimentos'
 import { ordenarComNulosPorUltimo } from '../dominio/ordenacao'
+import { calcularIdadeEmMeses } from '../dominio/idade'
 import type { AnimalComId } from '../dominio/identificacao'
 import type { Categoria } from '../db'
 
@@ -27,6 +32,9 @@ export interface BezerroProjecao {
   numero: string
   categoria?: Categoria
   dataNascimento?: string
+  idadeEmMeses: number | null
+  pesoUltimaPesagemKg: number | null
+  dataUltimaPesagem: string | null
   projecao: ProjecaoPeso | null
 }
 
@@ -186,13 +194,19 @@ export async function obterIndicadoresReprodutivos(
   // --- Bezerros a caminho do peso de venda ------------------------------
   const bezerrosProjecaoBrutos: BezerroProjecao[] = animais
     .filter((a) => (a.categoria === 'bezerro' || a.categoria === 'bezerra') && a.situacao === 'ativo')
-    .map((a) => ({
-      animalId: a.id,
-      numero: numeros.get(a.id) ?? '',
-      categoria: a.categoria,
-      dataNascimento: a.dataNascimento,
-      projecao: projetarDataPesoAlvo(pesagensPorAnimal.get(a.id) ?? [], ganhoMedioRebanho),
-    }))
+    .map((a) => {
+      const ultimaPesagem = obterUltimaPesagemValida(pesagensPorAnimal.get(a.id) ?? [])
+      return {
+        animalId: a.id,
+        numero: numeros.get(a.id) ?? '',
+        categoria: a.categoria,
+        dataNascimento: a.dataNascimento,
+        idadeEmMeses: calcularIdadeEmMeses(a.dataNascimento),
+        pesoUltimaPesagemKg: ultimaPesagem?.pesoKg ?? null,
+        dataUltimaPesagem: ultimaPesagem?.data ?? null,
+        projecao: projetarDataPesoAlvo(pesagensPorAnimal.get(a.id) ?? [], ganhoMedioRebanho),
+      }
+    })
   const bezerrosProjecao = ordenarComNulosPorUltimo(
     bezerrosProjecaoBrutos,
     (b) => (b.projecao ? new Date(b.projecao.dataPrevista).getTime() : null),
@@ -200,7 +214,13 @@ export async function obterIndicadoresReprodutivos(
   )
 
   // --- Vacas que não pariram este ano -----------------------------------
-  const matrizesAtivasPorId = new Map(matrizes.filter((m) => m.situacao === 'ativo').map((m) => [m.id, m]))
+  // Só conta vaca, não novilha — diferente da taxa de natalidade e dos
+  // rankings acima, que usam o conceito mais amplo de "matriz".
+  const matrizesAtivasPorId = new Map(
+    matrizes
+      .filter((m) => m.situacao === 'ativo' && m.categoria === 'vaca')
+      .map((m) => [m.id, m]),
+  )
   const matrizesFalharamEsteAno: MatrizComId[] = desempenhos
     .filter((d) => matrizesAtivasPorId.has(d.matrizId) && !d.anosComParto.includes(anoReferencia))
     .map((d) => ({ matrizId: d.matrizId, numero: d.numero }))

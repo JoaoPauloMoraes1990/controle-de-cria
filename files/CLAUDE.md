@@ -96,9 +96,12 @@ parar de funcionar offline.
 - O bezerro é vendido ao atingir **cerca de 180 kg (6 arrobas)**, não por
   idade fixa. A projeção de venda é por peso, calculada pelo ganho de peso por
   dia. Isso substitui o método antigo de somar 7 meses à data de nascimento.
-- A fêmea recebe **dois números na vida**: a tatuagem com o número da mãe ao
-  nascer, e um número próprio ao virar novilha (8 meses). Nunca um terceiro.
-- O macho fica só com a tatuagem, porque é vendido antes dos 8 meses.
+- A fêmea (bezerra) recebe **um número definitivo já ao nascer** — a tatuagem
+  é o número dela para sempre, não muda quando ela vira novilha.
+- O macho (bezerro) fica com o número da mãe, porque é vendido logo após o
+  desmame, antes dos 8 meses.
+- A transição de categoria de bezerra para novilha, aos 8 meses, é
+  **automática** (calculada pela data de nascimento, sem lançamento manual).
 - Cada animal tem um **código interno permanente e invisível**. Os números da
   fazenda são identificações com data de início. Buscar pelo número antigo ou
   pelo novo leva à mesma ficha.

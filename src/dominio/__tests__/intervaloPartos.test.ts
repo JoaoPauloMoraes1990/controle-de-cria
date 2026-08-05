@@ -32,4 +32,15 @@ describe('calcularIntervaloMedioEntrePartos', () => {
     const media = calcularIntervaloMedioEntrePartos(['2021-01-01', '2021-07-01'])
     expect(media).toBe(181)
   })
+
+  it('ignora datas malformadas (dia ou mês que não existe) em vez de virar NaN', () => {
+    const media = calcularIntervaloMedioEntrePartos([
+      '2021-01-01',
+      '2022-13-40',
+      '2022-01-01',
+      '2023-01-01',
+    ])
+    expect(media).toBeCloseTo(365, 0)
+    expect(Number.isNaN(media)).toBe(false)
+  })
 })

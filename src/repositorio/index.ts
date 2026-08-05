@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import { db } from '../db'
 import type {
   Animal,
@@ -7,6 +8,7 @@ import type {
   Sexo,
 } from '../db'
 import { kgParaArroba } from '../dominio/arroba'
+import { calcularIdadeEmMeses, IDADE_TRANSICAO_NOVILHA_MESES } from '../dominio/idade'
 import {
   buscarAnimaisPorNumero,
   type AnimalComId,
@@ -182,44 +184,63 @@ export interface DadosNascimento {
   maeId?: number
   sexo?: Sexo
   data?: string
+  pesoKg?: number
   observacoes?: string
 }
 
 export async function registrarNascimento(dados: DadosNascimento): Promise<number> {
-  return db.transaction('rw', db.animais, db.identificacoes, db.ultimaAcao, async () => {
-    const timestamp = agora()
-    const categoria: Categoria | undefined =
-      dados.sexo === 'M' ? 'bezerro' : dados.sexo === 'F' ? 'bezerra' : undefined
+  return db.transaction(
+    'rw',
+    db.animais,
+    db.identificacoes,
+    db.pesagens,
+    db.ultimaAcao,
+    async () => {
+      const timestamp = agora()
+      const categoria: Categoria | undefined =
+        dados.sexo === 'M' ? 'bezerro' : dados.sexo === 'F' ? 'bezerra' : undefined
 
-    const animalId = await db.animais.add({
-      categoria,
-      sexo: dados.sexo,
-      situacao: 'ativo',
-      dataNascimento: dados.data,
-      maeId: dados.maeId,
-      observacoes: dados.observacoes,
-      origem: 'lancamento',
-      criadoEm: timestamp,
-      atualizadoEm: timestamp,
-    })
+      const animalId = await db.animais.add({
+        categoria,
+        sexo: dados.sexo,
+        situacao: 'ativo',
+        dataNascimento: dados.data,
+        maeId: dados.maeId,
+        observacoes: dados.observacoes,
+        origem: 'lancamento',
+        criadoEm: timestamp,
+        atualizadoEm: timestamp,
+      })
 
-    const identificacaoId = await db.identificacoes.add({
-      animalId,
-      numero: dados.numero.trim(),
-      tipo: 'tatuagem',
-      dataInicio: dados.data,
-      ativa: true,
-      criadoEm: timestamp,
-    })
+      const identificacaoId = await db.identificacoes.add({
+        animalId,
+        numero: dados.numero.trim(),
+        tipo: 'tatuagem',
+        dataInicio: dados.data,
+        ativa: true,
+        criadoEm: timestamp,
+      })
 
-    await registrarUltimaAcao(
-      'nascimento',
-      { animalId, identificacaoId },
-      `Nascimento do bezerro ${dados.numero.trim()}`,
-    )
+      let pesagemId: number | undefined
+      if (dados.pesoKg != null) {
+        pesagemId = await db.pesagens.add({
+          animalId,
+          data: dados.data,
+          pesoKg: dados.pesoKg,
+          observacoes: 'Pesagem ao nascer',
+          criadoEm: timestamp,
+        })
+      }
 
-    return animalId
-  })
+      await registrarUltimaAcao(
+        'nascimento',
+        { animalId, identificacaoId, pesagemId },
+        `Nascimento do bezerro ${dados.numero.trim()}`,
+      )
+
+      return animalId
+    },
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -370,64 +391,50 @@ export async function registrarMorte(dados: DadosMorte): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
-// Virou novilha
+// Transição automática de categoria (bezerra → novilha aos 8 meses)
 // ---------------------------------------------------------------------------
 
-export interface DadosVirouNovilha {
+export interface TransicaoAutomatica {
   animalId: number
-  numeroNovo: string
-  data?: string
+  numero: string
 }
 
-export async function registrarVirouNovilha(dados: DadosVirouNovilha): Promise<void> {
-  return db.transaction(
-    'rw',
-    db.animais,
-    db.identificacoes,
-    db.mudancasCategoria,
-    db.ultimaAcao,
-    async () => {
-      const timestamp = agora()
-      const animal = await db.animais.get(dados.animalId)
-      const categoriaAnterior = animal?.categoria
+/**
+ * A bezerra já nasce com o número definitivo dela (a tatuagem), então não
+ * existe mais uma etapa manual de "virar novilha" — isso acontece sozinho
+ * quando ela completa 8 meses. Como o app não tem servidor/cron, essa
+ * verificação roda toda vez que a tela inicial é aberta.
+ */
+export async function aplicarTransicoesAutomaticasDeCategoria(
+  hoje: Date = new Date(),
+): Promise<TransicaoAutomatica[]> {
+  return db.transaction('rw', db.animais, db.identificacoes, db.mudancasCategoria, async () => {
+    const bezerras = await db.animais.where('categoria').equals('bezerra').toArray()
+    const timestamp = agora()
+    const transicoes: TransicaoAutomatica[] = []
 
-      const identificacaoAnterior = await identificacaoAtiva(dados.animalId)
-      if (identificacaoAnterior?.id != null) {
-        await db.identificacoes.update(identificacaoAnterior.id, { ativa: false })
-      }
+    for (const bezerra of bezerras) {
+      if (bezerra.id == null || bezerra.situacao !== 'ativo') continue
 
-      const identificacaoNovaId = await db.identificacoes.add({
-        animalId: dados.animalId,
-        numero: dados.numeroNovo.trim(),
-        tipo: 'numero_proprio',
-        dataInicio: dados.data,
-        ativa: true,
-        criadoEm: timestamp,
-      })
+      const idadeMeses = calcularIdadeEmMeses(bezerra.dataNascimento, hoje)
+      if (idadeMeses == null || idadeMeses < IDADE_TRANSICAO_NOVILHA_MESES) continue
 
-      const mudancaCategoriaId = await db.mudancasCategoria.add({
-        animalId: dados.animalId,
-        categoriaAnterior,
+      await db.mudancasCategoria.add({
+        animalId: bezerra.id,
+        categoriaAnterior: 'bezerra',
         categoriaNova: 'novilha',
-        data: dados.data,
+        data: format(hoje, 'yyyy-MM-dd'),
         criadoEm: timestamp,
       })
 
-      await db.animais.update(dados.animalId, { categoria: 'novilha', atualizadoEm: timestamp })
+      await db.animais.update(bezerra.id, { categoria: 'novilha', atualizadoEm: timestamp })
 
-      await registrarUltimaAcao(
-        'virou_novilha',
-        {
-          animalId: dados.animalId,
-          identificacaoNovaId,
-          identificacaoAnteriorId: identificacaoAnterior?.id,
-          categoriaAnterior,
-          mudancaCategoriaId,
-        },
-        `Virou novilha: número ${dados.numeroNovo.trim()}`,
-      )
-    },
-  )
+      const identificacao = await identificacaoAtiva(bezerra.id)
+      transicoes.push({ animalId: bezerra.id, numero: identificacao?.numero ?? '?' })
+    }
+
+    return transicoes
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -453,13 +460,23 @@ export async function desfazerUltimoLancamento(): Promise<boolean> {
     [db.animais, db.identificacoes, db.pesagens, db.vendas, db.mortes, db.mudancasCategoria, db.ultimaAcao],
     async () => {
       switch (ultima.tipo) {
-        case 'cadastro_animal':
-        case 'nascimento': {
+        case 'cadastro_animal': {
           const { animalId, identificacaoId } = payload as {
             animalId: number
             identificacaoId: number
           }
           await db.identificacoes.delete(identificacaoId)
+          await db.animais.delete(animalId)
+          break
+        }
+        case 'nascimento': {
+          const { animalId, identificacaoId, pesagemId } = payload as {
+            animalId: number
+            identificacaoId: number
+            pesagemId?: number
+          }
+          await db.identificacoes.delete(identificacaoId)
+          if (pesagemId != null) await db.pesagens.delete(pesagemId)
           await db.animais.delete(animalId)
           break
         }
@@ -489,28 +506,6 @@ export async function desfazerUltimoLancamento(): Promise<boolean> {
           }
           await db.mortes.delete(morteId)
           await db.animais.update(animalId, { situacao: situacaoAnterior, atualizadoEm: agora() })
-          break
-        }
-        case 'virou_novilha': {
-          const {
-            animalId,
-            identificacaoNovaId,
-            identificacaoAnteriorId,
-            categoriaAnterior,
-            mudancaCategoriaId,
-          } = payload as {
-            animalId: number
-            identificacaoNovaId: number
-            identificacaoAnteriorId?: number
-            categoriaAnterior?: Categoria
-            mudancaCategoriaId: number
-          }
-          await db.identificacoes.delete(identificacaoNovaId)
-          if (identificacaoAnteriorId != null) {
-            await db.identificacoes.update(identificacaoAnteriorId, { ativa: true })
-          }
-          await db.mudancasCategoria.delete(mudancaCategoriaId)
-          await db.animais.update(animalId, { categoria: categoriaAnterior, atualizadoEm: agora() })
           break
         }
       }

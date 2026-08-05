@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Botao } from '../componentes/Botao'
 import { BuscaInicial } from '../componentes/BuscaInicial'
 import { MarcaDaguaLogo } from '../componentes/MarcaDaguaLogo'
-import { obterUltimaAcao, obterConfiguracoes, desfazerUltimoLancamento } from '../repositorio'
+import {
+  obterUltimaAcao,
+  obterConfiguracoes,
+  desfazerUltimoLancamento,
+  aplicarTransicoesAutomaticasDeCategoria,
+} from '../repositorio'
 
 const QUINZE_DIAS_EM_MS = 15 * 24 * 60 * 60 * 1000
 
@@ -11,6 +16,7 @@ export function TelaInicial() {
   const navigate = useNavigate()
   const [ultimaAcaoDescricao, setUltimaAcaoDescricao] = useState<string | null>(null)
   const [avisoBackup, setAvisoBackup] = useState(false)
+  const [numerosViraramNovilha, setNumerosViraramNovilha] = useState<string[]>([])
 
   async function carregar() {
     const [ultima, config] = await Promise.all([obterUltimaAcao(), obterConfiguracoes()])
@@ -21,6 +27,11 @@ export function TelaInicial() {
 
   useEffect(() => {
     carregar()
+    aplicarTransicoesAutomaticasDeCategoria().then((transicoes) => {
+      if (transicoes.length > 0) {
+        setNumerosViraramNovilha(transicoes.map((t) => t.numero))
+      }
+    })
   }, [])
 
   async function aoDesfazer() {
@@ -46,9 +57,6 @@ export function TelaInicial() {
         <Botao onClick={() => navigate('/nascimento')}>Nasceu um bezerro</Botao>
         <Botao onClick={() => navigate('/pesagem')}>Pesar</Botao>
         <Botao onClick={() => navigate('/venda')}>Vendeu</Botao>
-        <Botao onClick={() => navigate('/virou-novilha')} variante="secundario">
-          Virou novilha
-        </Botao>
         <Botao onClick={() => navigate('/morte')} variante="secundario">
           Morreu
         </Botao>
@@ -56,6 +64,14 @@ export function TelaInicial() {
           Ver os números
         </Botao>
       </div>
+
+      {numerosViraramNovilha.length > 0 && (
+        <p className="mt-6 rounded-xl bg-verde-claro p-4 text-base text-verde-escuro">
+          {numerosViraramNovilha.length === 1
+            ? `A bezerra ${numerosViraramNovilha[0]} completou 8 meses e virou novilha.`
+            : `As bezerras ${numerosViraramNovilha.join(', ')} completaram 8 meses e viraram novilhas.`}
+        </p>
+      )}
 
       {ultimaAcaoDescricao && (
         <button

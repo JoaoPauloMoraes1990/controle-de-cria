@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Cabecalho } from '../componentes/Cabecalho'
 import { PaginaBase } from '../componentes/PaginaBase'
 import { CampoTexto } from '../componentes/CampoTexto'
+import { CampoNumero } from '../componentes/CampoNumero'
 import { CampoData } from '../componentes/CampoData'
 import { CampoBuscaAnimal } from '../componentes/CampoBuscaAnimal'
 import { SeletorSexo } from '../componentes/SeletorSexo'
@@ -18,15 +19,39 @@ export function Nascimento() {
   const { mostrar } = useConfirmacao()
 
   const [numero, setNumero] = useState('')
+  const [numeroAutoPreenchido, setNumeroAutoPreenchido] = useState(false)
   const [mae, setMae] = useState<ResultadoBusca | null>(null)
   const [sexo, setSexo] = useState<'M' | 'F' | undefined>()
   const [data, setData] = useState<string | undefined>()
+  const [peso, setPeso] = useState<number | undefined>()
   const [observacoes, setObservacoes] = useState('')
   const [salvando, setSalvando] = useState(false)
 
+  // O bezerro (macho) herda o número da mãe, pois é vendido logo após o
+  // desmame. A bezerra recebe número definitivo próprio (a tatuagem já é o
+  // número dela para sempre), então nunca é preenchido automaticamente.
   function aoSelecionarMae(resultado: ResultadoBusca) {
     setMae(resultado)
-    if (!numero.trim()) setNumero(resultado.identificacaoCorrespondente.numero)
+    if (sexo === 'M' && (!numero.trim() || numeroAutoPreenchido)) {
+      setNumero(resultado.identificacaoCorrespondente.numero)
+      setNumeroAutoPreenchido(true)
+    }
+  }
+
+  function aoAlterarSexo(novoSexo: 'M' | 'F' | undefined) {
+    setSexo(novoSexo)
+    if (novoSexo === 'M' && mae && (!numero.trim() || numeroAutoPreenchido)) {
+      setNumero(mae.identificacaoCorrespondente.numero)
+      setNumeroAutoPreenchido(true)
+    } else if (novoSexo !== 'M' && numeroAutoPreenchido) {
+      setNumero('')
+      setNumeroAutoPreenchido(false)
+    }
+  }
+
+  function aoAlterarNumero(valor: string) {
+    setNumero(valor)
+    setNumeroAutoPreenchido(false)
   }
 
   const pendencias = listarPendencias('nascimento', { data, sexo })
@@ -39,6 +64,7 @@ export function Nascimento() {
       maeId: mae?.animal.id,
       sexo,
       data,
+      pesoKg: peso,
       observacoes: observacoes || undefined,
     })
     setSalvando(false)
@@ -58,12 +84,13 @@ export function Nascimento() {
         <CampoTexto
           rotulo="Número (tatuagem)"
           valor={numero}
-          aoAlterar={setNumero}
+          aoAlterar={aoAlterarNumero}
           obrigatorio
           numerico
         />
-        <SeletorSexo valor={sexo} aoAlterar={setSexo} />
+        <SeletorSexo valor={sexo} aoAlterar={aoAlterarSexo} />
         <CampoData rotulo="Data do nascimento" valor={data} aoAlterar={setData} />
+        <CampoNumero rotulo="Peso ao nascer (opcional)" valor={peso} aoAlterar={setPeso} sufixo="kg" />
         <CampoTexto
           rotulo="Observações"
           valor={observacoes}

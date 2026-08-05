@@ -56,6 +56,8 @@ export interface IndicadoresReprodutivos {
   rankingArrobas: DesempenhoMatriz[]
   melhoresIntervalos: DesempenhoMatriz[]
   pioresIntervalos: DesempenhoMatriz[]
+  melhoresArrobas: DesempenhoMatriz[]
+  pioresArrobas: DesempenhoMatriz[]
   desempenhoMatrizes: DesempenhoMatriz[]
   matrizesFalharamEsteAno: MatrizComId[]
 }
@@ -207,6 +209,14 @@ export async function obterIndicadoresReprodutivos(
     false,
   ).slice(0, 20)
 
+  // --- 20 melhores e 20 piores vacas por arrobas produzidas no ano -------
+  const melhoresArrobas = [...desempenhos]
+    .sort((a, b) => b.arrobasProduzidasNoAno - a.arrobasProduzidasNoAno)
+    .slice(0, 20)
+  const pioresArrobas = [...desempenhos]
+    .sort((a, b) => a.arrobasProduzidasNoAno - b.arrobasProduzidasNoAno)
+    .slice(0, 20)
+
   // --- Bezerros machos a caminho do peso de venda ------------------------
   // Só macho entra aqui: é o que vai ser vendido. A fêmea fica na fazenda e
   // vira novilha automaticamente aos 8 meses.
@@ -256,6 +266,8 @@ export async function obterIndicadoresReprodutivos(
     rankingArrobas,
     melhoresIntervalos,
     pioresIntervalos,
+    melhoresArrobas,
+    pioresArrobas,
     desempenhoMatrizes: desempenhos,
     matrizesFalharamEsteAno,
   }

@@ -22,7 +22,7 @@ import type { AnimalComId } from '../dominio/identificacao'
 import { calcularGanhoPesoDiario, obterUltimaPesagemValida } from '../dominio/ganhoPeso'
 import { projetarDataPesoAlvo, type ProjecaoPeso } from '../dominio/projecaoVenda'
 import { calcularIdadeEmMeses, formatarIdadeEmMeses } from '../dominio/idade'
-import { formatarMesesEDias } from '../utilitarios/datas'
+import { formatarMesesEDias, parseDataSegura } from '../utilitarios/datas'
 import type {
   Identificacao,
   Pesagem,
@@ -38,6 +38,16 @@ interface CriaComDados {
   idadeEmMeses: number | null
   pesoUltimaPesagemKg: number | null
   dataUltimaPesagem: string | null
+}
+
+/**
+ * Datas de nascimento antigas podem vir malformadas do campo de digitação
+ * corrida do cadastro inicial — mostra a data como foi digitada em vez de
+ * travar a ficha inteira tentando formatar uma data inválida.
+ */
+function formatarDataNascimento(dataIso: string): string {
+  const data = parseDataSegura(dataIso)
+  return data ? format(data, 'dd/MM/yyyy') : dataIso
 }
 
 const SITUACOES: { valor: Situacao; rotulo: string }[] = [
@@ -241,6 +251,8 @@ export function FichaAnimal() {
                 <thead>
                   <tr className="border-b border-borda text-texto-suave">
                     <th className="py-2 pr-2">Número</th>
+                    <th className="py-2 pr-2">Sexo</th>
+                    <th className="py-2 pr-2">Nasceu em</th>
                     <th className="py-2 pr-2">Idade</th>
                     <th className="py-2 pr-2">Peso</th>
                     <th className="py-2 pr-2">Data da pesagem</th>
@@ -257,6 +269,12 @@ export function FichaAnimal() {
                         >
                           {c.numero || '(sem número)'}
                         </button>
+                      </td>
+                      <td className="py-2 pr-2">
+                        {c.animal.sexo === 'M' ? 'macho' : c.animal.sexo === 'F' ? 'fêmea' : 'não informado'}
+                      </td>
+                      <td className="py-2 pr-2">
+                        {c.animal.dataNascimento ? formatarDataNascimento(c.animal.dataNascimento) : '—'}
                       </td>
                       <td className="py-2 pr-2">
                         {c.idadeEmMeses != null ? formatarIdadeEmMeses(c.idadeEmMeses) : 'não disponível'}

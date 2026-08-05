@@ -86,8 +86,11 @@ export function Backup() {
             type="file"
             accept="application/json"
             onChange={aoEscolherArquivo}
-            className="text-lg"
+            className="hidden"
           />
+          <Botao variante="secundario" onClick={() => inputRef.current?.click()}>
+            Escolher arquivo do backup
+          </Botao>
           {erro && <p className="mt-2 text-base text-atencao">{erro}</p>}
         </Cartao>
 

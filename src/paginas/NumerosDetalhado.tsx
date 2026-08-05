@@ -184,36 +184,16 @@ export function NumerosDetalhado() {
 
         <Cartao>
           <p className="mb-3 text-lg font-semibold">
-            Ranking completo — arrobas produzidas em {dados.anoAtual}
+            20 melhores vacas — arrobas produzidas em {dados.anoAtual}
           </p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[320px] text-left text-base">
-              <thead>
-                <tr className="border-b border-borda text-texto-suave">
-                  <th className="py-2 pr-2">#</th>
-                  <th className="py-2 pr-2">Matriz</th>
-                  <th className="py-2 pr-2">Arrobas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dados.rankingArrobas.map((d, indice) => (
-                  <tr key={d.matrizId} className="border-b border-borda last:border-0">
-                    <td className="py-2 pr-2 text-texto-suave">{indice + 1}</td>
-                    <td className="py-2 pr-2">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/animais/${d.matrizId}`)}
-                        className="font-semibold text-marrom-escuro underline"
-                      >
-                        {d.numero || '(sem número)'}
-                      </button>
-                    </td>
-                    <td className="py-2 pr-2">{d.arrobasProduzidasNoAno.toFixed(1)} @</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TabelaArrobas itens={dados.melhoresArrobas} navigate={navigate} />
+        </Cartao>
+
+        <Cartao>
+          <p className="mb-3 text-lg font-semibold">
+            20 piores vacas — arrobas produzidas em {dados.anoAtual}
+          </p>
+          <TabelaArrobas itens={dados.pioresArrobas} navigate={navigate} />
         </Cartao>
 
         <Cartao>
@@ -286,6 +266,49 @@ function TabelaIntervalo({
                   : 'não disponível'}
               </td>
               <td className="py-2 pr-2">{d.totalCrias}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TabelaArrobas({
+  itens,
+  navigate,
+}: {
+  itens: DesempenhoMatriz[]
+  navigate: NavigateFunction
+}) {
+  if (itens.length === 0) {
+    return <p className="text-base text-texto-suave">Sem dados suficientes ainda.</p>
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[320px] text-left text-base">
+        <thead>
+          <tr className="border-b border-borda text-texto-suave">
+            <th className="py-2 pr-2">#</th>
+            <th className="py-2 pr-2">Matriz</th>
+            <th className="py-2 pr-2">Arrobas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {itens.map((d, indice) => (
+            <tr key={d.matrizId} className="border-b border-borda last:border-0">
+              <td className="py-2 pr-2 text-texto-suave">{indice + 1}</td>
+              <td className="py-2 pr-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/animais/${d.matrizId}`)}
+                  className="font-semibold text-marrom-escuro underline"
+                >
+                  {d.numero || '(sem número)'}
+                </button>
+              </td>
+              <td className="py-2 pr-2">{d.arrobasProduzidasNoAno.toFixed(1)} @</td>
             </tr>
           ))}
         </tbody>

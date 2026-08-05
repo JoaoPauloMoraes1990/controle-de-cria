@@ -337,3 +337,44 @@ de verdade no site publicado.
 5. Se houver vaca com duas ou mais crias lançadas, confira que "Intervalo
    médio entre partos do rebanho" mostra um número (nunca "NaN").
 6. `npm run test` roda os agora 80 testes automatizados.
+
+### Complemento — Bezerros machos, ranking de intervalo e ficha completa (2026-08-05)
+Depois de ver os dados reais no site publicado, mais três ajustes.
+
+- **"Bezerros ativos" agora é só macho** — passou a se chamar "Bezerros
+  machos ativos". É a lista de quem vai ser vendido; a fêmea fica na fazenda
+  e já tem o próprio controle (vira novilha sozinha aos 8 meses).
+- **Corrigido um resíduo do cadastro inicial**: uma cria lançada lá sem
+  número (campo "Número, se ficou") quer dizer que ela não ficou na fazenda,
+  mas como o cadastro inicial não pergunta o destino, ela ficava marcada como
+  "ativo" pra sempre — por isso apareciam bezerros de anos atrás na lista.
+  Agora, todo bezerro **macho** de mais de 12 meses nessa situação é corrigido
+  sozinho pra "Vendido" (o destino mais comum) na primeira vez que a tela
+  inicial abre. Fêmeas e casos mais recentes não são mexidos — ficam para
+  corrigir na ficha do animal quando for diferente (ex.: morte).
+- **Ranking de intervalo entre partos**: duas tabelas novas em "Ver os
+  números" → "Mais números" — as 20 vacas com melhor intervalo entre partos e
+  as 20 com pior, cada uma clicável até a ficha da vaca.
+- **Ficha do animal muito mais completa**: pra vaca/novilha, mostra o mesmo
+  desempenho que já aparecia só nos números do rebanho (intervalo entre
+  partos dela, anos seguidos sem parir, dias médios até 180kg das crias,
+  arrobas produzidas no ano) e a lista de todas as crias que ela teve, cada
+  uma com link, idade e peso da última pesagem. Pra bezerro ativo, mostra a
+  idade e a previsão de quando chega aos 180kg.
+
+### Como testar
+1. Em "Ver os números", confira que "Bezerros machos ativos" só lista
+   macho — nenhuma bezerra aparece ali.
+2. Se havia bezerro antigo (mais de um ano, sem número, vindo do cadastro
+   inicial) aparecendo como ativo, confira que ele sumiu da lista sozinho ao
+   abrir a tela inicial — e que continua aparecendo na ficha da mãe dele,
+   dentro de "Crias".
+3. Em "Mais números", confira as tabelas "20 melhores vacas" e "20 piores
+   vacas" por intervalo entre partos.
+4. Abra a ficha de uma vaca com pelo menos duas crias — confira o cartão
+   "Desempenho reprodutivo" e a tabela "Crias".
+5. Abra a ficha de um bezerro macho ativo — confira o cartão "Peso de venda
+   (180kg)" com a idade dele já aparecendo em cima, junto da data de
+   nascimento.
+6. `npm run test` continua rodando os 80 testes automatizados (nenhum
+   cálculo novo, só reaproveitados).

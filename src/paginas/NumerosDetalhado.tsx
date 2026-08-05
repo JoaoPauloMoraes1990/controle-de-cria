@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, type NavigateFunction } from 'react-router-dom'
 import {
   Bar,
   BarChart,
@@ -12,7 +12,11 @@ import {
 import { Cabecalho } from '../componentes/Cabecalho'
 import { PaginaBase } from '../componentes/PaginaBase'
 import { Cartao } from '../componentes/Cartao'
-import { obterIndicadoresReprodutivos, type IndicadoresReprodutivos } from '../repositorio/indicadores'
+import {
+  obterIndicadoresReprodutivos,
+  type IndicadoresReprodutivos,
+  type DesempenhoMatriz,
+} from '../repositorio/indicadores'
 import { formatarMesesEDias } from '../utilitarios/datas'
 
 const CORES = {
@@ -169,6 +173,16 @@ export function NumerosDetalhado() {
         </Cartao>
 
         <Cartao>
+          <p className="mb-3 text-lg font-semibold">20 melhores vacas — intervalo entre partos</p>
+          <TabelaIntervalo itens={dados.melhoresIntervalos} navigate={navigate} />
+        </Cartao>
+
+        <Cartao>
+          <p className="mb-3 text-lg font-semibold">20 piores vacas — intervalo entre partos</p>
+          <TabelaIntervalo itens={dados.pioresIntervalos} navigate={navigate} />
+        </Cartao>
+
+        <Cartao>
           <p className="mb-3 text-lg font-semibold">
             Ranking completo — arrobas produzidas em {dados.anoAtual}
           </p>
@@ -228,5 +242,54 @@ export function NumerosDetalhado() {
         </Cartao>
       </div>
     </PaginaBase>
+  )
+}
+
+function TabelaIntervalo({
+  itens,
+  navigate,
+}: {
+  itens: DesempenhoMatriz[]
+  navigate: NavigateFunction
+}) {
+  if (itens.length === 0) {
+    return <p className="text-base text-texto-suave">Sem dados suficientes ainda.</p>
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[420px] text-left text-base">
+        <thead>
+          <tr className="border-b border-borda text-texto-suave">
+            <th className="py-2 pr-2">#</th>
+            <th className="py-2 pr-2">Matriz</th>
+            <th className="py-2 pr-2">Intervalo entre partos</th>
+            <th className="py-2 pr-2">Crias</th>
+          </tr>
+        </thead>
+        <tbody>
+          {itens.map((d, indice) => (
+            <tr key={d.matrizId} className="border-b border-borda last:border-0">
+              <td className="py-2 pr-2 text-texto-suave">{indice + 1}</td>
+              <td className="py-2 pr-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/animais/${d.matrizId}`)}
+                  className="font-semibold text-marrom-escuro underline"
+                >
+                  {d.numero || '(sem número)'}
+                </button>
+              </td>
+              <td className="py-2 pr-2">
+                {d.intervaloMedioEntrePartos != null
+                  ? formatarMesesEDias(d.intervaloMedioEntrePartos)
+                  : 'não disponível'}
+              </td>
+              <td className="py-2 pr-2">{d.totalCrias}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

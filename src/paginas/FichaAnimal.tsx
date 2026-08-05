@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { format, parseISO } from 'date-fns'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Cabecalho } from '../componentes/Cabecalho'
 import { PaginaBase } from '../componentes/PaginaBase'
@@ -12,10 +13,16 @@ import {
   listarVendas,
   listarMortes,
   listarMudancasCategoria,
+  listarCriasDoAnimal,
   atualizarAnimal,
 } from '../repositorio'
+import { obterIndicadoresReprodutivos, type DesempenhoMatriz } from '../repositorio/indicadores'
+import { mapaNumerosAtuais } from '../repositorio/cadastroInicial'
 import type { AnimalComId } from '../dominio/identificacao'
-import { calcularGanhoPesoDiario } from '../dominio/ganhoPeso'
+import { calcularGanhoPesoDiario, obterUltimaPesagemValida } from '../dominio/ganhoPeso'
+import { projetarDataPesoAlvo, type ProjecaoPeso } from '../dominio/projecaoVenda'
+import { calcularIdadeEmMeses, formatarIdadeEmMeses } from '../dominio/idade'
+import { formatarMesesEDias } from '../utilitarios/datas'
 import type {
   Identificacao,
   Pesagem,
@@ -24,6 +31,14 @@ import type {
   MudancaCategoria,
   Situacao,
 } from '../db'
+
+interface CriaComDados {
+  animal: AnimalComId
+  numero: string
+  idadeEmMeses: number | null
+  pesoUltimaPesagemKg: number | null
+  dataUltimaPesagem: string | null
+}
 
 const SITUACOES: { valor: Situacao; rotulo: string }[] = [
   { valor: 'ativo', rotulo: 'Ativo' },
@@ -53,6 +68,10 @@ export function FichaAnimal() {
   const [mudancas, setMudancas] = useState<MudancaCategoria[]>([])
   const [observacoes, setObservacoes] = useState('')
   const [carregando, setCarregando] = useState(true)
+  const [desempenho, setDesempenho] = useState<DesempenhoMatriz | null>(null)
+  const [crias, setCrias] = useState<CriaComDados[]>([])
+  const [idadeEmMeses, setIdadeEmMeses] = useState<number | null>(null)
+  const [projecaoPeso, setProjecaoPeso] = useState<ProjecaoPeso | null>(null)
 
   async function carregar() {
     const a = await obterAnimal(animalId)
@@ -74,6 +93,42 @@ export function FichaAnimal() {
     setVendas(vend)
     setMortes(mort)
     setMudancas(mud)
+
+    if (a.categoria === 'vaca' || a.categoria === 'novilha') {
+      const [indicadores, criasBrutas, numeros] = await Promise.all([
+        obterIndicadoresReprodutivos(),
+        listarCriasDoAnimal(animalId),
+        mapaNumerosAtuais(),
+      ])
+      setDesempenho(indicadores.desempenhoMatrizes.find((d) => d.matrizId === animalId) ?? null)
+      const criasComDados = await Promise.all(
+        criasBrutas.map(async (c) => {
+          const pesagensCria = c.id != null ? await listarPesagens(c.id) : []
+          const ultima = obterUltimaPesagemValida(pesagensCria)
+          return {
+            animal: c,
+            numero: numeros.get(c.id) ?? '',
+            idadeEmMeses: calcularIdadeEmMeses(c.dataNascimento),
+            pesoUltimaPesagemKg: ultima?.pesoKg ?? null,
+            dataUltimaPesagem: ultima?.data ?? null,
+          }
+        }),
+      )
+      setCrias(criasComDados)
+    } else {
+      setDesempenho(null)
+      setCrias([])
+    }
+
+    if ((a.categoria === 'bezerro' || a.categoria === 'bezerra') && a.situacao === 'ativo') {
+      setIdadeEmMeses(calcularIdadeEmMeses(a.dataNascimento))
+      const indicadores = await obterIndicadoresReprodutivos()
+      setProjecaoPeso(projetarDataPesoAlvo(pes, indicadores.ganhoMedioRebanhoKgDia))
+    } else {
+      setIdadeEmMeses(null)
+      setProjecaoPeso(null)
+    }
+
     setCarregando(false)
   }
 
@@ -131,8 +186,96 @@ export function FichaAnimal() {
             {animal.categoria ? ROTULO_CATEGORIA[animal.categoria] : 'categoria não informada'} ·{' '}
             {animal.sexo === 'M' ? 'macho' : animal.sexo === 'F' ? 'fêmea' : 'sexo não informado'}
           </p>
-          {animal.dataNascimento && <p className="text-lg">Nasceu em {animal.dataNascimento}</p>}
+          {animal.dataNascimento && (
+            <p className="text-lg">
+              Nasceu em {animal.dataNascimento}
+              {idadeEmMeses != null && ` · ${formatarIdadeEmMeses(idadeEmMeses)}`}
+            </p>
+          )}
         </Cartao>
+
+        {(animal.categoria === 'bezerro' || animal.categoria === 'bezerra') &&
+          animal.situacao === 'ativo' && (
+            <Cartao>
+              <p className="mb-2 text-lg font-semibold">Peso de venda (180kg)</p>
+              <p className="text-lg">
+                {projecaoPeso == null
+                  ? 'não disponível'
+                  : projecaoPeso.jaAtingiu
+                    ? 'já atingiu — pronto para vender'
+                    : `previsão: ${format(parseISO(projecaoPeso.dataPrevista), 'dd/MM/yyyy')}${
+                        projecaoPeso.estimativa ? ' (estimativa)' : ''
+                      }`}
+              </p>
+            </Cartao>
+          )}
+
+        {desempenho && (
+          <Cartao>
+            <p className="mb-2 text-lg font-semibold">Desempenho reprodutivo</p>
+            <ul className="flex flex-col gap-1 text-lg">
+              <li>
+                Intervalo médio entre partos:{' '}
+                {desempenho.intervaloMedioEntrePartos != null
+                  ? formatarMesesEDias(desempenho.intervaloMedioEntrePartos)
+                  : 'não disponível'}
+              </li>
+              <li>Total de crias: {desempenho.totalCrias}</li>
+              <li>Anos seguidos sem parir: {desempenho.anosConsecutivosSemParir}</li>
+              <li>
+                Dias médios até 180kg das crias:{' '}
+                {desempenho.diasMediosAte180kg != null
+                  ? `${Math.round(desempenho.diasMediosAte180kg)} dias`
+                  : 'não disponível'}
+              </li>
+              <li>Arrobas produzidas este ano: {desempenho.arrobasProduzidasNoAno.toFixed(1)} @</li>
+            </ul>
+          </Cartao>
+        )}
+
+        {crias.length > 0 && (
+          <Cartao>
+            <p className="mb-2 text-lg font-semibold">Crias</p>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-left text-base">
+                <thead>
+                  <tr className="border-b border-borda text-texto-suave">
+                    <th className="py-2 pr-2">Número</th>
+                    <th className="py-2 pr-2">Idade</th>
+                    <th className="py-2 pr-2">Peso</th>
+                    <th className="py-2 pr-2">Data da pesagem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {crias.map((c) => (
+                    <tr key={c.animal.id} className="border-b border-borda last:border-0">
+                      <td className="py-2 pr-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/animais/${c.animal.id}`)}
+                          className="font-semibold text-marrom-escuro underline"
+                        >
+                          {c.numero || '(sem número)'}
+                        </button>
+                      </td>
+                      <td className="py-2 pr-2">
+                        {c.idadeEmMeses != null ? formatarIdadeEmMeses(c.idadeEmMeses) : 'não disponível'}
+                      </td>
+                      <td className="py-2 pr-2">
+                        {c.pesoUltimaPesagemKg != null ? `${c.pesoUltimaPesagemKg} kg` : 'sem peso ainda'}
+                      </td>
+                      <td className="py-2 pr-2">
+                        {c.dataUltimaPesagem != null
+                          ? format(parseISO(c.dataUltimaPesagem), 'dd/MM/yyyy')
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Cartao>
+        )}
 
         <Cartao>
           <p className="mb-2 text-lg font-semibold">Situação</p>

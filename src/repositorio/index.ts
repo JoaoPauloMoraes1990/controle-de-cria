@@ -58,6 +58,11 @@ export async function obterAnimal(id: number): Promise<AnimalComId | undefined> 
   return (await db.animais.get(id)) as AnimalComId | undefined
 }
 
+export async function listarCriasDoAnimal(maeId: number): Promise<AnimalComId[]> {
+  const crias = await db.animais.where('maeId').equals(maeId).toArray()
+  return crias.sort((a, b) => (a.dataNascimento ?? '').localeCompare(b.dataNascimento ?? '')) as AnimalComId[]
+}
+
 export async function listarIdentificacoes(animalId: number): Promise<Identificacao[]> {
   const lista = await db.identificacoes.where('animalId').equals(animalId).toArray()
   return lista.sort((a, b) => (a.dataInicio ?? '').localeCompare(b.dataInicio ?? ''))
@@ -434,6 +439,45 @@ export async function aplicarTransicoesAutomaticasDeCategoria(
     }
 
     return transicoes
+  })
+}
+
+const IDADE_MINIMA_CORRECAO_HISTORICA_MESES = 12
+
+/**
+ * No cadastro inicial, uma cria lançada sem número quer dizer que ela não
+ * ficou na fazenda (o campo é "Número, se ficou") — mas o cadastro inicial
+ * não pergunta o destino, então ela ficava marcada como "ativo" pra sempre.
+ * Aqui, todo bezerro macho antigo (mais de 12 meses) nessa situação é
+ * corrigido pra "vendido" automaticamente — é o destino mais comum. Fêmeas e
+ * casos mais recentes ficam de fora, pra corrigir na ficha do animal quando
+ * for diferente (ex.: morte).
+ */
+export async function corrigirBezerrosHistoricosSemNumero(
+  hoje: Date = new Date(),
+): Promise<number> {
+  return db.transaction('rw', db.animais, db.identificacoes, async () => {
+    const [candidatos, identificacoes] = await Promise.all([
+      db.animais.where('origem').equals('cadastro_inicial').toArray(),
+      db.identificacoes.toArray(),
+    ])
+    const comIdentificacao = new Set(identificacoes.map((i) => i.animalId))
+    const timestamp = agora()
+    let corrigidos = 0
+
+    for (const animal of candidatos) {
+      if (animal.id == null || animal.situacao !== 'ativo') continue
+      if (animal.sexo !== 'M') continue
+      if (comIdentificacao.has(animal.id)) continue
+
+      const idadeMeses = calcularIdadeEmMeses(animal.dataNascimento, hoje)
+      if (idadeMeses == null || idadeMeses < IDADE_MINIMA_CORRECAO_HISTORICA_MESES) continue
+
+      await db.animais.update(animal.id, { situacao: 'vendido', atualizadoEm: timestamp })
+      corrigidos++
+    }
+
+    return corrigidos
   })
 }
 

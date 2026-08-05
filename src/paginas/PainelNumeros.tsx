@@ -65,9 +65,9 @@ export function PainelNumeros() {
         />
 
         <Cartao>
-          <p className="mb-2 text-lg font-semibold">Bezerros ativos</p>
+          <p className="mb-2 text-lg font-semibold">Bezerros machos ativos</p>
           {dados.bezerrosProjecao.length === 0 ? (
-            <p className="text-base text-texto-suave">Nenhum bezerro ativo no momento.</p>
+            <p className="text-base text-texto-suave">Nenhum bezerro macho ativo no momento.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[420px] text-left text-base">

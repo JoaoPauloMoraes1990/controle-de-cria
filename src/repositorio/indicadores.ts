@@ -51,8 +51,11 @@ export interface IndicadoresReprodutivos {
   intervaloMedioRebanho: number | null
   totalMatrizes: number
   bezerrosProjecao: BezerroProjecao[]
+  ganhoMedioRebanhoKgDia: number | null
   rankingVelocidade: DesempenhoMatriz[]
   rankingArrobas: DesempenhoMatriz[]
+  melhoresIntervalos: DesempenhoMatriz[]
+  pioresIntervalos: DesempenhoMatriz[]
   desempenhoMatrizes: DesempenhoMatriz[]
   matrizesFalharamEsteAno: MatrizComId[]
 }
@@ -191,9 +194,24 @@ export async function obterIndicadoresReprodutivos(
     (a, b) => b.arrobasProduzidasNoAno - a.arrobasProduzidasNoAno,
   )
 
-  // --- Bezerros a caminho do peso de venda ------------------------------
+  // --- 20 melhores e 20 piores vacas por intervalo entre partos ----------
+  const desempenhosComIntervalo = desempenhos.filter((d) => d.intervaloMedioEntrePartos != null)
+  const melhoresIntervalos = ordenarComNulosPorUltimo(
+    desempenhosComIntervalo,
+    (d) => d.intervaloMedioEntrePartos,
+    true,
+  ).slice(0, 20)
+  const pioresIntervalos = ordenarComNulosPorUltimo(
+    desempenhosComIntervalo,
+    (d) => d.intervaloMedioEntrePartos,
+    false,
+  ).slice(0, 20)
+
+  // --- Bezerros machos a caminho do peso de venda ------------------------
+  // Só macho entra aqui: é o que vai ser vendido. A fêmea fica na fazenda e
+  // vira novilha automaticamente aos 8 meses.
   const bezerrosProjecaoBrutos: BezerroProjecao[] = animais
-    .filter((a) => (a.categoria === 'bezerro' || a.categoria === 'bezerra') && a.situacao === 'ativo')
+    .filter((a) => a.categoria === 'bezerro' && a.situacao === 'ativo')
     .map((a) => {
       const ultimaPesagem = obterUltimaPesagemValida(pesagensPorAnimal.get(a.id) ?? [])
       return {
@@ -233,8 +251,11 @@ export async function obterIndicadoresReprodutivos(
     intervaloMedioRebanho,
     totalMatrizes: matrizes.length,
     bezerrosProjecao,
+    ganhoMedioRebanhoKgDia: ganhoMedioRebanho,
     rankingVelocidade,
     rankingArrobas,
+    melhoresIntervalos,
+    pioresIntervalos,
     desempenhoMatrizes: desempenhos,
     matrizesFalharamEsteAno,
   }

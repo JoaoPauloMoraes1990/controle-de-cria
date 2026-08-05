@@ -8,6 +8,7 @@ import {
   obterConfiguracoes,
   desfazerUltimoLancamento,
   aplicarTransicoesAutomaticasDeCategoria,
+  corrigirBezerrosHistoricosSemNumero,
 } from '../repositorio'
 
 const QUINZE_DIAS_EM_MS = 15 * 24 * 60 * 60 * 1000
@@ -32,6 +33,7 @@ export function TelaInicial() {
         setNumerosViraramNovilha(transicoes.map((t) => t.numero))
       }
     })
+    corrigirBezerrosHistoricosSemNumero()
   }, [])
 
   async function aoDesfazer() {

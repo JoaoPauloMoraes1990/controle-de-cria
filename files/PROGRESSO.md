@@ -378,3 +378,36 @@ Depois de ver os dados reais no site publicado, mais três ajustes.
    nascimento.
 6. `npm run test` continua rodando os 80 testes automatizados (nenhum
    cálculo novo, só reaproveitados).
+
+### Complemento — Layout para computador (2026-08-05)
+Combinado que os lançamentos passam a acontecer também no computador, não só
+no celular. A tela inicial continua idêntica ao celular; todo o resto da
+tela (formulários, ficha do animal, números) agora aproveita telas largas:
+
+- Botão de "Escolher arquivo do backup" trocado por um botão de verdade
+  (igual aos outros do app) — o seletor de arquivo padrão do navegador não
+  parecia clicável.
+- Ranking de arrobas produzidas também virou 20 melhores + 20 piores em
+  "Mais números", no lugar da lista completa (mesmo formato do ranking de
+  intervalo entre partos).
+- Tabela de crias na ficha do animal ganhou as colunas sexo e data de
+  nascimento.
+- Em telas largas (computador), o contêiner das páginas alarga e os cartões
+  de "Ver os números" e "Mais números" viram uma grade de 2 colunas — com
+  uma regra fixa de organização: **número agregado do rebanho sempre perto
+  do detalhamento dele** (ex.: "Intervalo médio do rebanho" logo acima das
+  tabelas de 20 melhores/20 piores nesse mesmo número). Essa regra ficou
+  registrada em `files/CLAUDE.md` para valer nos próximos números que forem
+  adicionados. No celular (tela estreita) nada muda — os cartões continuam
+  empilhados como sempre foram.
+
+### Como testar
+1. Abra o site no navegador do computador (tela larga) e confira que a tela
+   inicial continua igual à do celular.
+2. Em "Ver os números" e "Mais números", confira que os cartões ficam lado a
+   lado em vez de empilhados, e que o intervalo médio do rebanho aparece
+   logo acima das tabelas de 20 melhores/piores desse número.
+3. Abra "Nasceu um bezerro" (ou qualquer outro formulário) no computador e
+   confira que não fica mais uma coluna estreita no meio de uma tela vazia.
+4. No celular (ou estreitando a janela do navegador), confira que nada
+   mudou — tudo continua empilhado como antes.

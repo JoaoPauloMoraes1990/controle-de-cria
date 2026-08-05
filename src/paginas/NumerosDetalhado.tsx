@@ -12,6 +12,7 @@ import {
 import { Cabecalho } from '../componentes/Cabecalho'
 import { PaginaBase } from '../componentes/PaginaBase'
 import { Cartao } from '../componentes/Cartao'
+import { CartaoIndicador } from '../componentes/CartaoIndicador'
 import {
   obterIndicadoresReprodutivos,
   type IndicadoresReprodutivos,
@@ -79,7 +80,7 @@ export function NumerosDetalhado() {
         números", na tela inicial.
       </p>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
         <Cartao>
           <p className="mb-3 text-lg font-semibold">Nascimentos por ano</p>
           <div className="h-56 w-full">
@@ -110,7 +111,7 @@ export function NumerosDetalhado() {
           </div>
         </Cartao>
 
-        <Cartao>
+        <Cartao className="lg:col-span-2">
           <p className="mb-1 text-lg font-semibold">Nascimentos por mês</p>
           <p className="mb-3 text-base text-texto-suave">Somando todos os anos lançados.</p>
           <div className="h-56 w-full">
@@ -126,7 +127,7 @@ export function NumerosDetalhado() {
           </div>
         </Cartao>
 
-        <Cartao>
+        <Cartao className="lg:col-span-2">
           <p className="mb-3 text-lg font-semibold">
             Ranking completo — velocidade até o bezerro de 180kg
           </p>
@@ -172,6 +173,17 @@ export function NumerosDetalhado() {
           )}
         </Cartao>
 
+        <CartaoIndicador
+          className="lg:col-span-2"
+          titulo="Intervalo médio entre partos do rebanho"
+          valor={
+            dados.intervaloMedioRebanho != null
+              ? formatarMesesEDias(dados.intervaloMedioRebanho)
+              : 'não disponível'
+          }
+          explicacao="As duas tabelas abaixo mostram esse mesmo número, vaca por vaca."
+        />
+
         <Cartao>
           <p className="mb-3 text-lg font-semibold">20 melhores vacas — intervalo entre partos</p>
           <TabelaIntervalo itens={dados.melhoresIntervalos} navigate={navigate} />
@@ -196,7 +208,7 @@ export function NumerosDetalhado() {
           <TabelaArrobas itens={dados.pioresArrobas} navigate={navigate} />
         </Cartao>
 
-        <Cartao>
+        <Cartao className="lg:col-span-2">
           <p className="mb-3 text-lg font-semibold">
             Vacas que não pariram em {dados.anoAtual}
           </p>

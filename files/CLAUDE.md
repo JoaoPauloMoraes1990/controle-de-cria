@@ -38,6 +38,24 @@ flexibilizadas sem eu pedir explicitamente.
 - Modo claro apenas. Sem menu escondido, sem gaveta lateral, sem gesto que
   precise ser descoberto.
 
+### Tela de computador (além do celular)
+
+O celular continua sendo o uso principal no curral, mas parte dos
+lançamentos e a consulta dos números também acontece num computador. A tela
+inicial (`TelaInicial.tsx`) fica exatamente como é no celular — não usa o
+container responsivo. Todo o resto (`PaginaBase`) alarga em telas grandes
+(`lg:`), sem mudar nada no celular.
+
+Nas telas de números (painel simples e "mais números"), em tela larga os
+cartões viram uma grade de 2 colunas em vez de empilhados — e essa grade
+**tem que agrupar números que se relacionam**, lado a lado ou em sequência:
+o número agregado do rebanho (ex.: intervalo médio entre partos) perto do
+detalhamento dele (ex.: as 20 melhores e 20 piores vacas nesse mesmo
+número), não espalhados em cartões soltos sem relação visual. Ao adicionar
+um novo número, pensar em qual outro número existente ele se relaciona e
+posicionar perto dele — isso vale tanto para os cartões atuais quanto para
+qualquer indicador novo que entrar depois.
+
 ### Comportamento do sistema
 
 - **Todos os campos são opcionais, exceto o número do animal.** Sempre é

@@ -33,7 +33,7 @@ export function PainelNumeros() {
     <PaginaBase>
       <Cabecalho titulo="Os números" />
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
         <CartaoIndicador
           titulo={`Taxa de natalidade em ${dados.anoAtual}`}
           valor={taxaAnoAtual?.taxa != null ? `${Math.round(taxaAnoAtual.taxa)}%` : 'não disponível'}
@@ -54,17 +54,30 @@ export function PainelNumeros() {
           </ul>
         </Cartao>
 
-        <CartaoIndicador
-          titulo="Intervalo médio entre partos do rebanho"
-          valor={
-            dados.intervaloMedioRebanho != null
+        <Cartao className="lg:col-span-2">
+          <p className="text-base font-medium text-texto-suave">
+            Intervalo médio entre partos do rebanho
+          </p>
+          <p className="mt-1 text-4xl font-bold text-marrom-escuro">
+            {dados.intervaloMedioRebanho != null
               ? formatarMesesEDias(dados.intervaloMedioRebanho)
-              : 'não disponível'
-          }
-          explicacao="Tempo médio entre uma cria e a seguinte, considerando as matrizes com pelo menos duas crias lançadas."
-        />
+              : 'não disponível'}
+          </p>
+          <p className="mt-2 text-base text-texto-suave">
+            Tempo médio entre uma cria e a seguinte, considerando as matrizes com pelo menos duas
+            crias lançadas.{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/numeros/detalhado')}
+              className="font-semibold underline"
+            >
+              Ver as 20 melhores e 20 piores vacas nesse número
+            </button>
+            .
+          </p>
+        </Cartao>
 
-        <Cartao>
+        <Cartao className="lg:col-span-2">
           <p className="mb-2 text-lg font-semibold">Bezerros machos ativos</p>
           {dados.bezerrosProjecao.length === 0 ? (
             <p className="text-base text-texto-suave">Nenhum bezerro macho ativo no momento.</p>
@@ -156,13 +169,15 @@ export function PainelNumeros() {
           </ul>
         </Cartao>
 
-        <Botao variante="secundario" onClick={() => navigate('/descarte')}>
-          Ver lista de descarte sugerida
-        </Botao>
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <Botao variante="secundario" onClick={() => navigate('/descarte')}>
+            Ver lista de descarte sugerida
+          </Botao>
 
-        <Botao variante="neutro" onClick={() => navigate('/numeros/detalhado')}>
-          Ver mais números
-        </Botao>
+          <Botao variante="neutro" onClick={() => navigate('/numeros/detalhado')}>
+            Ver mais números
+          </Botao>
+        </div>
       </div>
     </PaginaBase>
   )
